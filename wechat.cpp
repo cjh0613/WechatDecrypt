@@ -1,10 +1,10 @@
 using namespace std;
 #include <Windows.h>
 #include <iostream>
-#include <openssl/rand.h>
-#include <openssl/evp.h>
-#include <openssl/aes.h>
-#include <openssl/hmac.h>
+#include "openssl/rand.h"
+#include "openssl/evp.h"
+#include "openssl/aes.h"
+#include "openssl/hmac.h"
 
 #undef _UNICODE
 #define SQLITE_FILE_HEADER "SQLite format 3" 
@@ -97,13 +97,13 @@ int Decryptdb()
 #ifndef NO_USE_HMAC_SHA1
         unsigned char hash_mac[HMAC_SHA1_SIZE] = { 0 };
         unsigned int hash_len = 0;
-        HMAC_CTX hctx;
-        HMAC_CTX_init(&hctx);
-        HMAC_Init_ex(&hctx, mac_key, sizeof(mac_key), EVP_sha1(), NULL);
-        HMAC_Update(&hctx, pTemp + offset, DEFAULT_PAGESIZE - reserve - offset + IV_SIZE);
-        HMAC_Update(&hctx, (const unsigned char*)& nPage, sizeof(nPage));
-        HMAC_Final(&hctx, hash_mac, &hash_len);
-        HMAC_CTX_cleanup(&hctx);
+        HMAC_CTX *hctx = HMAC_CTX_new();
+        HMAC_CTX_reset(hctx);
+        HMAC_Init_ex(hctx, mac_key, sizeof(mac_key), EVP_sha1(), NULL);
+        HMAC_Update(hctx, pTemp + offset, DEFAULT_PAGESIZE - reserve - offset + IV_SIZE);
+        HMAC_Update(hctx, (const unsigned char*)& nPage, sizeof(nPage));
+        HMAC_Final(hctx, hash_mac, &hash_len);
+        HMAC_CTX_free(hctx);
         if (0 != memcmp(hash_mac, pTemp + DEFAULT_PAGESIZE - reserve + IV_SIZE, sizeof(hash_mac)))
         {
             printf("\n 哈希值错误! \n");
